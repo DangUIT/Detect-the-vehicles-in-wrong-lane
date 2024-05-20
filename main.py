@@ -31,8 +31,10 @@ counter_lane_all.set_args(view_img=True,
                           draw_tracks=True,
                           line_thickness=2,
                           region_thickness=1)
-
-
+for i in range(1, 4):
+    f = open("Save/Data/lane%d.txt" % i, "w")
+    f.write("Wong lane %d\n" % i)
+    f.close()
 while cap.isOpened():
     success, im0 = cap.read()
     if not success:
