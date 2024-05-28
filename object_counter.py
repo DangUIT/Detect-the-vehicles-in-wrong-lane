@@ -213,27 +213,42 @@ class ObjectCounter:
                         if (box[1] - prev_position[1]) * (self.counting_region[0].centroid.x - prev_position[1]) < 0:
                             self.in_counts += 1
                             self.class_wise_count[self.names[cls]]["SUM"] += 1
-                    if is_inside[1]:
+                                        if is_inside[1]:
                         if self.names[cls] != 'car':
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
-                            f = open("Save/Data/lane1.txt", "a")
-                            f.write(f"{self.names[cls]}#{track_id}\n")
+                            f = open("Save/Data/lane1.txt")
+                            data = f.readlines()
+                            name = (f"{self.names[cls]}#{track_id}\n")
                             f.close()
+                            if name not in data:
+                                f = open("Save/Data/lane1.txt", "a")
+                                f.write(f"{self.names[cls]}#{track_id}\n")
+                                f.close()
                     if is_inside[2]:
                         if self.names[cls] not in ['truck', 'bus']:
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
-                            f = open("Save/Data/lane2.txt", "a")
-                            f.write(f"{self.names[cls]}#{track_id}\n")
+                            f = open("Save/Data/lane2.txt")
+                            data = f.readlines()
+                            name = (f"{self.names[cls]}#{track_id}\n")
                             f.close()
+                            if name not in data:
+                                f = open("Save/Data/lane2.txt", "a")
+                                f.write(f"{self.names[cls]}#{track_id}\n")
+                                f.close()
                     if is_inside[3]:
                         if self.names[cls] != 'motorbike':
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
-                            f = open("Save/Data/lane3.txt", "a")
-                            f.write(f"{self.names[cls]}#{track_id}\n")
+                            f = open("Save/Data/lane3.txt")
+                            data = f.readlines()
+                            name = (f"{self.names[cls]}#{track_id}\n")
                             f.close()
+                            if name not in data:
+                                f = open("Save/Data/lane3.txt", "a")
+                                f.write(f"{self.names[cls]}#{track_id}\n")
+                                f.close()
         labels_dict = {}
 
         for key, value in self.class_wise_count.items():
