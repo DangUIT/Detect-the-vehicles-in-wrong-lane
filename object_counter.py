@@ -26,7 +26,7 @@ class ObjectCounter:
         self.reg_pts = []
         self.line_dist_thresh = 15
         self.counting_region = []
-        self.region_color = (255, 0, 255)
+        self.region_color = (0, 0, 255)
         self.region_thickness = 5
 
         # Image and annotation Information
@@ -46,7 +46,7 @@ class ObjectCounter:
         self.count_ids = []
         self.class_wise_count = {}
         self.count_txt_thickness = 0
-        self.count_txt_color = (255, 255, 255)
+        self.count_txt_color = (255, 0, 0)
         self.count_bg_color = (255, 255, 255)
         self.cls_txtdisplay_gap = 50
         self.fontsize = 0.6
@@ -64,8 +64,8 @@ class ObjectCounter:
         self,
         classes_names,
         reg_pts,
-        count_reg_color=(255, 0, 255),
-        count_txt_color=(255, 0, 255),
+        count_reg_color=(0, 0, 255),
+        count_txt_color=(0, 0, 255),
         count_bg_color=(255, 255, 255),
         line_thickness=2,
         track_thickness=2,
@@ -214,14 +214,14 @@ class ObjectCounter:
                             self.in_counts += 1
                             self.class_wise_count[self.names[cls]]["SUM"] += 1
                     if is_inside[1]:
-                        if self.names[cls] != 'car':
+                        if self.names[cls] not in ['car', 'truck']:
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
                             f = open("Save/Data/lane1.txt", "a")
                             f.write(f"{self.names[cls]}#{track_id}\n")
                             f.close()
                     if is_inside[2]:
-                        if self.names[cls] not in ['truck', 'bus']:
+                        if self.names[cls] not in ['bus']:
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
                             f = open("Save/Data/lane2.txt", "a")
