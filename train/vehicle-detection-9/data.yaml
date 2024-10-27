@@ -1,0 +1,15 @@
+names:
+- bus
+- car
+- motorbike
+- truck
+nc: 4
+roboflow:
+  license: CC BY 4.0
+  project: vehicle-detection-x5epo
+  url: https://universe.roboflow.com/vehicle-avnyy/vehicle-detection-x5epo/dataset/9
+  version: 9
+  workspace: vehicle-avnyy
+test: ../test/images
+train: ../train/images
+val: ../valid/images
