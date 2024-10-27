@@ -3,6 +3,9 @@ import cv2
 import object_counter
 
 model = YOLO("train/weights/best.pt")
+# model = YOLO("train/PTQ_736/best_saved_model/best_int8.tflite")
+# model = YOLO("train/PTQ_480/best_saved_model/best_int8.tflite")
+
 
 cap = cv2.VideoCapture("Test/Video/test4.mp4")
 assert cap.isOpened(), "Error reading video file"
@@ -41,9 +44,9 @@ while cap.isOpened():
         print("Video frame is empty or video processing has been successfully completed.")
         break
     font = cv2.FONT_HERSHEY_SIMPLEX
-    cv2.putText(im0, '1', (298, 430), font, 1, (0, 0, 255), 1)
-    cv2.putText(im0, '2', (546, 430), font, 1, (0, 0, 255), 1)
-    cv2.putText(im0, '3', (764, 430), font, 1, (0, 0, 255), 1)
+    cv2.putText(im0, '1', (298, 430), font, 1, (0, 255, 255), 1)
+    cv2.putText(im0, '2', (546, 430), font, 1, (0, 255, 255), 1)
+    cv2.putText(im0, '3', (764, 430), font, 1, (0, 255, 255), 1)
     tracks = model.track(im0, persist=True, show=False, classes=classes)
 
     im0 = counter_lane_all.start_counting(im0, tracks)

@@ -221,7 +221,7 @@ class ObjectCounter:
                             f.write(f"{self.names[cls]}#{track_id}\n")
                             f.close()
                     if is_inside[2]:
-                        if self.names[cls] not in ['bus']:
+                        if self.names[cls] != 'bus':
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
                             f = open("Save/Data/lane2.txt", "a")
