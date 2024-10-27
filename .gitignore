@@ -1,3 +1,5 @@
+.gitignore
+
 .idea/
 .venv/
 __pycache__/
@@ -5,7 +7,7 @@ ultralytics/
 runs/
 
 **/*.avi
-.gitignore
+
 addition.py
 **/*.npy
 laneDetection.py
