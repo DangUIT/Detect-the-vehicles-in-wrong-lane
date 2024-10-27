@@ -5,7 +5,7 @@ ultralytics/
 runs/
 
 **/*.avi
-./gitignore
+.gitignore
 addition.py
 **/*.npy
 laneDetection.py
