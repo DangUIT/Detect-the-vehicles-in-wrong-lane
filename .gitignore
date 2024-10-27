@@ -9,8 +9,8 @@ runs/
 addition.py
 **/*.npy
 laneDetection.py
-**/*.tflite
-!**/best_int8.tflite
-**/*.pb
-**/*.onnx
-**/*.pt
+#**/*.tflite
+#!**/best_int8.tflite
+#**/*.pb
+#**/*.onnx
+#**/*.pt
