@@ -1,0 +1,17 @@
+description: Ultralytics best model trained on /content/drive/MyDrive/yolov8/vehicle_dataset/data.yaml
+author: Ultralytics
+date: '2024-11-14T04:08:36.046848'
+version: 8.3.31
+license: AGPL-3.0 License (https://ultralytics.com/license)
+docs: https://docs.ultralytics.com
+stride: 32
+task: detect
+batch: 1
+imgsz:
+- 224
+- 416
+names:
+  0: motorbike
+  1: car
+  2: bus
+  3: truck
