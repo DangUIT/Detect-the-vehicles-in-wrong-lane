@@ -1,6 +1,4 @@
-Dưới đây là phiên bản sửa lại với thông tin bạn cung cấp:  
 
----
 
 # Detect Vehicle in Wrong Lane
 
