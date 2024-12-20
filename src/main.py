@@ -36,7 +36,7 @@ classes = [0, 1, 2, 3]
 
 print(model.names)
 # Video writer
-video_writer = cv2.VideoWriter("object_counting_output.avi",
+video_writer = cv2.VideoWriter("../result/Video/result.avi",
                                cv2.VideoWriter_fourcc(*'mp4v'),
                                fps,
                                (w, h))
