@@ -112,5 +112,3 @@ The project aims to detect vehicles driving in the wrong lane using a custom-tra
 Contributions are welcome! Please fork the repository and submit a pull request to propose changes or improvements.  
 
 ---
-
-Nếu bạn cần điều chỉnh thêm thông tin nào, hãy cho mình biết nhé! 😊
