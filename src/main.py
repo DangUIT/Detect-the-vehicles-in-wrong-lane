@@ -3,26 +3,14 @@ import cv2
 import object_counter
 from time import time
 
-# model = YOLO("train/weights/best.pt")
-# model = YOLO("train/PTQ_224_416/best_saved_model/best_int8.tflite")
-# model = YOLO("train/PTQ_224_416_new/best_int8.tflite")
-model = YOLO("train/PTQ_224_416_new/best_full_integer_quant_1.tflite")
-# model = YOLO("train/PTQ_384_640_new/best_saved_model/best_int8.tflite")
-# model = YOLO("train/QAT_224_416/best_saved_model/best_int8.tflite")
-# model = YOLO("train/PTQ_480/best_saved_model/best_int8.tflite")
-# model = YOLO("train/QAT_480/best_qat_saved_model/best_qat_int8.tflite")
-# model = YOLO("train/PTQ_640/best_saved_model/best_int8.tflite")
-# model = YOLO("train/QAT_640/best_qat_saved_model/best_qat_int8.tflite")
-# model = YOLO("train/PTQ_736/best_saved_model/best_int8.tflite")
-# model = YOLO("train/QAT_736/weights/best_saved_model/best_int8.tflite")
-
-# model = YOLO("train/best.pt")
-
-image_size = (224, 416)
+model = YOLO("../train/weight/best.pt")
+# model = YOLO("../train/PTQ_416_736/best_int8.tflite", task="detect")
+# model = YOLO("../train/PTQ_416_736/best_full_integer_quant.tflite", task="detect")
 
 
+image_size = (360, 640)
 
-cap = cv2.VideoCapture("Test/Video/test.mp4")
+cap = cv2.VideoCapture("../video/Video/test.mp4")
 assert cap.isOpened(), "Error reading video file"
 w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
 
@@ -50,7 +38,7 @@ counter_lane_all.set_args(view_img=True,
                           line_thickness=2,
                           region_thickness=1)
 for i in range(1, 4):
-    f = open("Save/Data/lane%d.txt" % i, "w")
+    f = open("../result/Save/Data/lane%d.txt" % i, "w")
     f.write("Wong lane %d\n" % i)
     f.close()
 
@@ -83,14 +71,15 @@ while cap.isOpened():
 
     frame_count += 1
     print(f"FPS: {current_fps:.2f}")
-    cv2.putText(im0, f"FPS: {current_fps:.2f}", (27, 61), font, 1, (0, 0, 255), 3)
     cv2.putText(im0, '1', (298, 430), font, 1, (0, 255, 255), 1)
     cv2.putText(im0, '2', (546, 430), font, 1, (0, 255, 255), 1)
     cv2.putText(im0, '3', (764, 430), font, 1, (0, 255, 255), 1)
-    # im0 = cv2.resize(im0, (736, 736))
-    tracks = model.track(im0, persist=True, show=False, classes=classes, imgsz=image_size)
+    tracks = model.track(im0, persist=True, show=False, imgsz=image_size, conf=0.25)
     im0 = counter_lane_all.start_counting(im0, tracks)
     video_writer.write(im0)
+    cv2.putText(im0, f"FPS: {current_fps:.2f}", (27, 61), font, 1, (0, 0, 255), 3)
+
+
 
 cap.release()
 video_writer.release()

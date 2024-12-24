@@ -1,0 +1,17 @@
+description: Ultralytics best model trained on /kaggle/working/Project-5/data.yaml
+author: Ultralytics
+date: '2024-12-19T14:43:09.036102'
+version: 8.3.51
+license: AGPL-3.0 License (https://ultralytics.com/license)
+docs: https://docs.ultralytics.com
+stride: 32
+task: detect
+batch: 1
+imgsz:
+- 416
+- 736
+names:
+  0: bus
+  1: car
+  2: motorbike
+  3: truck

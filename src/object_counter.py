@@ -1,14 +1,10 @@
-# Ultralytics YOLO 🚀, AGPL-3.0 license
-
 from collections import defaultdict
 
 import cv2
-
 from ultralytics.utils.checks import check_imshow, check_requirements
 from ultralytics.utils.plotting import Annotator, colors
 
 check_requirements("shapely>=2.0.0")
-
 from shapely.geometry import LineString, Point, Polygon
 
 
@@ -61,22 +57,22 @@ class ObjectCounter:
         self.env_check = check_imshow(warn=True)
 
     def set_args(
-        self,
-        classes_names,
-        reg_pts,
-        count_reg_color=(0, 0, 255),
-        count_txt_color=(0, 0, 255),
-        count_bg_color=(255, 255, 255),
-        line_thickness=2,
-        track_thickness=2,
-        view_img=False,
-        view_in_counts=True,
-        view_out_counts=True,
-        draw_tracks=False,
-        track_color=None,
-        region_thickness=5,
-        line_dist_thresh=15,
-        cls_txtdisplay_gap=50,
+            self,
+            classes_names,
+            reg_pts,
+            count_reg_color=(0, 0, 255),
+            count_txt_color=(0, 0, 255),
+            count_bg_color=(255, 255, 255),
+            line_thickness=2,
+            track_thickness=2,
+            view_img=False,
+            view_in_counts=True,
+            view_out_counts=True,
+            draw_tracks=False,
+            track_color=None,
+            region_thickness=5,
+            line_dist_thresh=15,
+            cls_txtdisplay_gap=50,
     ):
         """
         Configures the Counter's image, bounding box line thickness, and counting region points.
@@ -145,9 +141,9 @@ class ObjectCounter:
         if event == cv2.EVENT_LBUTTONDOWN:
             for i, point in enumerate(self.reg_pts[0]):
                 if (
-                    isinstance(point, (tuple, list))
-                    and len(point) >= 2
-                    and (abs(x - point[0]) < 10 and abs(y - point[1]) < 10)
+                        isinstance(point, (tuple, list))
+                        and len(point) >= 2
+                        and (abs(x - point[0]) < 10 and abs(y - point[1]) < 10)
                 ):
                     self.selected_point = i
                     self.is_drawing = True
@@ -170,7 +166,8 @@ class ObjectCounter:
 
         # Draw region or line
         for i in range(4):
-            self.annotator.draw_region(reg_pts=self.reg_pts[i], color=self.region_color, thickness=self.region_thickness)
+            self.annotator.draw_region(reg_pts=self.reg_pts[i], color=self.region_color,
+                                       thickness=self.region_thickness)
 
         if tracks[0].boxes.id is not None:
             boxes = tracks[0].boxes.xyxy.cpu()
@@ -217,21 +214,21 @@ class ObjectCounter:
                         if self.names[cls] not in ['car', 'truck']:
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
-                            f = open("Save/Data/lane1.txt", "a")
+                            f = open("../result/Save/Data/lane1.txt", "a")
                             f.write(f"{self.names[cls]}#{track_id}\n")
                             f.close()
                     if is_inside[2]:
                         if self.names[cls] != 'bus':
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
-                            f = open("Save/Data/lane2.txt", "a")
+                            f = open("../result/Save/Data/lane1.txt", "a")
                             f.write(f"{self.names[cls]}#{track_id}\n")
                             f.close()
                     if is_inside[3]:
                         if self.names[cls] != 'motorbike':
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
-                            f = open("Save/Data/lane3.txt", "a")
+                            f = open("../result/Save/Data/lane1.txt", "a")
                             f.write(f"{self.names[cls]}#{track_id}\n")
                             f.close()
         labels_dict = {}
@@ -269,4 +266,3 @@ class ObjectCounter:
         if self.view_img:
             self.display_frames()
         return self.im0
-
