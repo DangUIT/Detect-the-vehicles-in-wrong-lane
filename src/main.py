@@ -1,91 +1,164 @@
+import argparse
+import json
 from ultralytics import YOLO
 import cv2
 import object_counter
 from time import time
+import os
 
-model = YOLO("../train/weight/best.pt")
-# model = YOLO("../train/PTQ_416_736/best_int8.tflite", task="detect")
-# model = YOLO("../train/PTQ_416_736/best_full_integer_quant.tflite", task="detect")
-
-
-image_size = (360, 640)
-
-cap = cv2.VideoCapture("../video/Video/test.mp4")
-assert cap.isOpened(), "Error reading video file"
-w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
-
-lanes = [[(171, 434), (459, 100), (623, 100), (862, 434)],
-         [(171, 434), (459, 100), (521, 100), (426, 434)],
-         [(426, 434), (521, 100), (578, 100), (666, 434)],
-         [(666, 434), (578, 100), (623, 100), (862, 434)]]
+# Constants
+MODEL_PATH = "../train/PTQ_416_736/best_int8.tflite"
+OUTPUT_VIDEO_PATH = "../result/Video/result.avi"
+FPS_WARMUP_FRAMES = 5
+FONT = cv2.FONT_HERSHEY_SIMPLEX
+TARGET_SIZE = (1280, 720)
+IMAGE_SIZE = (416, 736)
+LANES_CONFIG_PATH = "../config/lanes_config.json"  # Path to the single JSON configuration file
 
 
-classes = [0, 1, 2, 3]
-
-print(model.names)
-# Video writer
-video_writer = cv2.VideoWriter("../result/Video/result.avi",
-                               cv2.VideoWriter_fourcc(*'mp4v'),
-                               fps,
-                               (w, h))
-
-# Init Object Counter
-counter_lane_all = object_counter.ObjectCounter()
-counter_lane_all.set_args(view_img=True,
-                          reg_pts=lanes,
-                          classes_names=model.names,
-                          draw_tracks=True,
-                          line_thickness=2,
-                          region_thickness=1)
-for i in range(1, 4):
-    f = open("../result/Save/Data/lane%d.txt" % i, "w")
-    f.write("Wong lane %d\n" % i)
-    f.close()
-
-# Variables for calculating average, minimum and maximum FPS
-total_fps = 0
-frame_count = 0
-min_fps = float("inf")
-max_fps = 0
-warmup_frames = 5
-
-loop_time = time()
-
-while cap.isOpened():
-    success, im0 = cap.read()
-    if not success:
-        print("Video frame is empty or video processing has been successfully completed.")
-        break
-
-    font = cv2.FONT_HERSHEY_SIMPLEX
-
-    # Calculating for current FPS
-    current_fps = 1 / (time() - loop_time)
-    loop_time = time()
-
-    # Skip first few frames to stabilize FPS
-    if frame_count >= warmup_frames:
-        total_fps += current_fps
-        min_fps = min(min_fps, current_fps)
-        max_fps = max(max_fps, current_fps)
-
-    frame_count += 1
-    print(f"FPS: {current_fps:.2f}")
-    cv2.putText(im0, '1', (298, 430), font, 1, (0, 255, 255), 1)
-    cv2.putText(im0, '2', (546, 430), font, 1, (0, 255, 255), 1)
-    cv2.putText(im0, '3', (764, 430), font, 1, (0, 255, 255), 1)
-    tracks = model.track(im0, persist=True, show=False, imgsz=image_size, conf=0.25)
-    im0 = counter_lane_all.start_counting(im0, tracks)
-    video_writer.write(im0)
-    cv2.putText(im0, f"FPS: {current_fps:.2f}", (27, 61), font, 1, (0, 0, 255), 3)
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Process a video with the YOLO model.")
+    parser.add_argument(
+        '--video',
+        type=str,
+        default='../video/Video/bentre.mp4',  # Default video path if none provided
+        help='Path to the input video file'
+    )
+    return parser.parse_args()
 
 
+def load_lane_configuration(video_filename):
+    # Get the video name without the extension
+    video_name = os.path.splitext(os.path.basename(video_filename))[0]
 
-cap.release()
-video_writer.release()
-cv2.destroyAllWindows()
+    # Open and read the single JSON configuration file
+    if not os.path.exists(LANES_CONFIG_PATH):
+        raise FileNotFoundError(f"Lane configuration file not found: {LANES_CONFIG_PATH}")
 
-average_fps = total_fps / (frame_count - warmup_frames) if frame_count > warmup_frames else 0
-print(f"Average FPS: {average_fps:.2f}")
-print(f"Min FPS: {min_fps:.2f}")
-print(f"Max FPS: {max_fps:.2f}")
+    with open(LANES_CONFIG_PATH, "r", encoding='utf-8') as file:
+        lanes_config = json.load(file)  # Read lane configuration data
+
+    # Check and return the lane configuration for the video
+    if video_name not in lanes_config:
+        raise ValueError(f"No lane configuration found for video: {video_name}")
+
+    return lanes_config[video_name]
+
+
+def initialize_model(model_path):
+    return YOLO(model_path, task="detect")
+
+
+def initialize_video_capture(video_path):
+    cap = cv2.VideoCapture(video_path)
+    assert cap.isOpened(), "Error reading video file"
+    width, height, fps = (int(cap.get(prop)) for prop in
+                          (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+    return cap, width, height, fps
+
+
+def initialize_video_writer(output_path, width, height, fps):
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    return cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+
+def setup_object_counter(model_names, lanes):
+    counter = object_counter.ObjectCounter()
+    counter.set_args(
+        view_img=True,
+        reg_pts=lanes,
+        classes_names=dict(model_names),
+        draw_tracks=True,
+        line_thickness=2,
+        region_thickness=1,
+        track_thickness=1
+    )
+    return counter
+
+
+def write_lane_info(lanes_count):
+    for i in range(1, lanes_count):
+        with open(f"../result/Save/Data/lane{i}.txt", "w") as file:
+            file.write(f"Wrong lane {i}\n")
+
+
+def process_video_frames(cap, model, video_writer, object_count, fps_warmup_frames):
+    total_fps = 0
+    frame_count = 0
+    min_fps = float("inf")
+    max_fps = 0
+    start_time = time()
+
+    while cap.isOpened():
+        success, frame = cap.read()
+        if not success:
+            print("Video processing completed.")
+            break
+        resize_frame = cv2.resize(frame, TARGET_SIZE)
+        current_fps = 1 / (time() - start_time)
+        start_time = time()
+
+        if frame_count >= fps_warmup_frames:
+            total_fps += current_fps
+            min_fps = min(min_fps, current_fps)
+            max_fps = max(max_fps, current_fps)
+
+        frame_count += 1
+        print(f"FPS: {current_fps:.2f}")
+
+        tracks = model.track(resize_frame, persist=True, show=False, imgsz=IMAGE_SIZE, conf=0.1)
+        cv2.putText(resize_frame, f"FPS: {current_fps:.2f}", (27, 61), FONT, 1, (0, 0, 255), 3)
+        resize_frame = object_count.start_counting(resize_frame, tracks)
+
+        video_writer.write(resize_frame)
+
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+
+    average_fps = total_fps / (frame_count - fps_warmup_frames) if frame_count > fps_warmup_frames else 0
+    print(f"Average FPS: {average_fps:.2f}")
+    print(f"Min FPS: {min_fps:.2f}")
+    print(f"Max FPS: {max_fps:.2f}")
+
+
+def get_unique_output_path(video_path, output_dir="../result/Video", suffix="_result", extension=".mp4"):
+    video_name = os.path.splitext(os.path.basename(video_path))[0]
+    output_base = os.path.join(output_dir, f"{video_name}{suffix}")
+    output_path = f"{output_base}{extension}"
+
+    counter = 1
+    while os.path.exists(output_path):
+        output_path = f"{output_base}_{counter}{extension}"
+        counter += 1
+
+    return os.path.normpath(output_path)
+
+
+def main():
+    args = parse_arguments()
+
+    # Load lane configuration
+    lanes = load_lane_configuration(args.video)
+
+    model = initialize_model(MODEL_PATH)
+    print(model.names)
+
+    cap, width, height, fps = initialize_video_capture(args.video)
+
+    output_video_path = get_unique_output_path(args.video)
+    video_writer = initialize_video_writer(output_video_path, width, height, fps)
+
+    object_count = setup_object_counter(model.names, lanes)
+    write_lane_info(len(lanes))
+
+    process_video_frames(cap, model, video_writer, object_count, FPS_WARMUP_FRAMES)
+
+    cap.release()
+    video_writer.release()
+    cv2.destroyAllWindows()
+
+    print(f"Video output saved to: {output_video_path}")
+
+
+if __name__ == "__main__":
+    main()

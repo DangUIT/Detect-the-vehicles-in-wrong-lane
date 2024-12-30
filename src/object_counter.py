@@ -49,7 +49,7 @@ class ObjectCounter:
 
         # Tracks info
         self.track_history = defaultdict(list)
-        self.track_thickness = 2
+        self.track_thickness = 1
         self.draw_tracks = False
         self.track_color = None
 
@@ -64,7 +64,7 @@ class ObjectCounter:
             count_txt_color=(0, 0, 255),
             count_bg_color=(255, 255, 255),
             line_thickness=2,
-            track_thickness=2,
+            track_thickness=1,
             view_img=False,
             view_in_counts=True,
             view_out_counts=True,
@@ -211,34 +211,34 @@ class ObjectCounter:
                             self.in_counts += 1
                             self.class_wise_count[self.names[cls]]["SUM"] += 1
                     if is_inside[1]:
-                        if self.names[cls] not in ['car', 'truck']:
+                        if self.names[cls] == 'motorbike':
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
                             f = open("../result/Save/Data/lane1.txt", "a")
                             f.write(f"{self.names[cls]}#{track_id}\n")
                             f.close()
                     if is_inside[2]:
-                        if self.names[cls] != 'bus':
+                        if self.names[cls] == 'motorbike':
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
-                            f = open("../result/Save/Data/lane1.txt", "a")
+                            f = open("../result/Save/Data/lane2.txt", "a")
                             f.write(f"{self.names[cls]}#{track_id}\n")
                             f.close()
                     if is_inside[3]:
                         if self.names[cls] != 'motorbike':
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
-                            f = open("../result/Save/Data/lane1.txt", "a")
+                            f = open("../result/Save/Data/lane3.txt", "a")
                             f.write(f"{self.names[cls]}#{track_id}\n")
                             f.close()
         labels_dict = {}
 
-        for key, value in self.class_wise_count.items():
-            if value["SUM"] != 0:
-                if not self.view_in_counts and not self.view_out_counts:
-                    continue
-                else:
-                    labels_dict[str.capitalize(key)] = f"{value['SUM']}"
+        # for key, value in self.class_wise_count.items():
+        #     if value["SUM"] != 0:
+        #         if not self.view_in_counts and not self.view_out_counts:
+        #             continue
+        #         else:
+        #             labels_dict[str.capitalize(key)] = f"{value['SUM']}"
 
         # print(labels_dict)
         if labels_dict is not None:
@@ -251,9 +251,6 @@ class ObjectCounter:
             if len(self.reg_pts[0]) == 4:  # only add mouse event If user drawn region
                 cv2.setMouseCallback(self.window_name, self.mouse_event_for_region, {"region_points": self.reg_pts[0]})
             cv2.imshow(self.window_name, self.im0)
-            # Break Window
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                return
 
     def start_counting(self, im0, tracks):
 
