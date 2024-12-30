@@ -52,14 +52,26 @@ def initialize_model(model_path):
 def initialize_video_capture(video_path):
     cap = cv2.VideoCapture(video_path)
     assert cap.isOpened(), "Error reading video file"
-    width, height, fps = (int(cap.get(prop)) for prop in
-                          (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
-    return cap, width, height, fps
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    return cap, fps
 
 
-def initialize_video_writer(output_path, width, height, fps):
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    return cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+def initialize_video_writer(output_path, fps):
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    return cv2.VideoWriter(output_path, fourcc, fps, TARGET_SIZE)
+
+
+def get_unique_output_path(video_path, output_dir="../result/Video", suffix="_result", extension=".avi"):
+    video_name = os.path.splitext(os.path.basename(video_path))[0]
+    output_base = os.path.join(output_dir, f"{video_name}{suffix}")
+    output_path = f"{output_base}{extension}"
+
+    counter = 1
+    while os.path.exists(output_path):
+        output_path = f"{output_base}_{counter}{extension}"
+        counter += 1
+
+    return os.path.normpath(output_path)
 
 
 def setup_object_counter(model_names, lanes):
@@ -69,16 +81,25 @@ def setup_object_counter(model_names, lanes):
         reg_pts=lanes,
         classes_names=dict(model_names),
         draw_tracks=True,
-        line_thickness=2,
+        line_thickness=1,
         region_thickness=1,
         track_thickness=1
     )
     return counter
 
 
-def write_lane_info(lanes_count):
+def write_lane_info(lanes_count, output_video_path):
+    # Get the folder name based on the video name without extension
+    video_name = os.path.splitext(os.path.basename(output_video_path))[0]
+
+    # Create the output directory inside result/Save/ and name it based on the video name
+    save_dir = os.path.join("../result/Save", video_name)
+    os.makedirs(save_dir, exist_ok=True)  # Create the directory if it doesn't exist
+
+    # Write lane information into text files inside the folder
     for i in range(1, lanes_count):
-        with open(f"../result/Save/Data/lane{i}.txt", "w") as file:
+        lane_file = os.path.join(save_dir, f"lane{i}.txt")
+        with open(lane_file, "w") as file:
             file.write(f"Wrong lane {i}\n")
 
 
@@ -121,19 +142,6 @@ def process_video_frames(cap, model, video_writer, object_count, fps_warmup_fram
     print(f"Max FPS: {max_fps:.2f}")
 
 
-def get_unique_output_path(video_path, output_dir="../result/Video", suffix="_result", extension=".mp4"):
-    video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_base = os.path.join(output_dir, f"{video_name}{suffix}")
-    output_path = f"{output_base}{extension}"
-
-    counter = 1
-    while os.path.exists(output_path):
-        output_path = f"{output_base}_{counter}{extension}"
-        counter += 1
-
-    return os.path.normpath(output_path)
-
-
 def main():
     args = parse_arguments()
 
@@ -143,13 +151,14 @@ def main():
     model = initialize_model(MODEL_PATH)
     print(model.names)
 
-    cap, width, height, fps = initialize_video_capture(args.video)
+    cap, fps = initialize_video_capture(args.video)
 
     output_video_path = get_unique_output_path(args.video)
-    video_writer = initialize_video_writer(output_video_path, width, height, fps)
+    video_writer = initialize_video_writer(output_video_path, fps)
 
     object_count = setup_object_counter(model.names, lanes)
-    write_lane_info(len(lanes))
+    # Call the function to save lane info as text files in the result folder
+    write_lane_info(len(lanes), output_video_path)
 
     process_video_frames(cap, model, video_writer, object_count, FPS_WARMUP_FRAMES)
 

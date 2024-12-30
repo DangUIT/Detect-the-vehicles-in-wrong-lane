@@ -1,5 +1,0 @@
-Wong lane 3
-truck#102
-truck#193
-truck#437
-car#437
