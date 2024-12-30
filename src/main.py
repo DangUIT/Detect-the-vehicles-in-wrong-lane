@@ -5,6 +5,7 @@ import cv2
 import object_counter
 from time import time
 import os
+import json
 
 # Constants
 MODEL_PATH = "../train/PTQ_416_736/best_int8.tflite"
@@ -74,7 +75,7 @@ def get_unique_output_path(video_path, output_dir="../result/Video", suffix="_re
     return os.path.normpath(output_path)
 
 
-def setup_object_counter(model_names, lanes):
+def setup_object_counter(model_names, number_lane, lanes):
     counter = object_counter.ObjectCounter()
     counter.set_args(
         view_img=True,
@@ -83,7 +84,8 @@ def setup_object_counter(model_names, lanes):
         draw_tracks=True,
         line_thickness=2,
         region_thickness=1,
-        track_thickness=1
+        track_thickness=1,
+        region_lane=number_lane
     )
     return counter
 
@@ -133,6 +135,9 @@ def main():
     # Load lane configuration
     lanes = load_lane_configuration(args.video)
 
+    # Count lists for each key in lanes
+    number_lane = len(lanes)
+
     model = initialize_model(MODEL_PATH)
     print(model.names)
 
@@ -141,7 +146,7 @@ def main():
     output_video_path = get_unique_output_path(args.video)
     video_writer = initialize_video_writer(output_video_path, fps)
 
-    object_count = setup_object_counter(model.names, lanes)
+    object_count = setup_object_counter(model.names, number_lane, lanes)
 
     process_video_frames(cap, model, video_writer, object_count, FPS_WARMUP_FRAMES)
 

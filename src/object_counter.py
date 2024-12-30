@@ -24,7 +24,7 @@ class ObjectCounter:
         self.counting_region = []
         self.region_color = (0, 0, 255)
         self.region_thickness = 5
-
+        self.region_lane = 4
         # Image and annotation Information
         self.im0 = None
         self.tf = None
@@ -71,6 +71,7 @@ class ObjectCounter:
             draw_tracks=False,
             track_color=None,
             region_thickness=5,
+            region_lane=4,
             line_dist_thresh=15,
             cls_txtdisplay_gap=50,
     ):
@@ -91,8 +92,10 @@ class ObjectCounter:
             count_reg_color (RGB color): Color of object counting region
             track_color (RGB color): color for tracks
             region_thickness (int): Object counting Region thickness
+            region_lane (int):  Object counting number lanes
             line_dist_thresh (int): Euclidean Distance threshold for line counter
             cls_txtdisplay_gap (int): Display gap between each class count
+
         """
         self.tf = line_thickness
         self.view_img = view_img
@@ -108,7 +111,7 @@ class ObjectCounter:
             self.counting_region.append(LineString(self.reg_pts[0]))
         elif len(reg_pts[0]) >= 3:
             print("Polygon Counter Initiated.")
-            for i in range(4):
+            for i in range(region_lane):
                 self.reg_pts.append(reg_pts[i])
                 self.counting_region.append(Polygon(self.reg_pts[i]))
             # print(self.counting_region)
@@ -123,6 +126,7 @@ class ObjectCounter:
         self.count_bg_color = count_bg_color
         self.region_color = count_reg_color
         self.region_thickness = region_thickness
+        self.region_lane = region_lane
         self.line_dist_thresh = line_dist_thresh
         self.cls_txtdisplay_gap = cls_txtdisplay_gap
 
@@ -164,102 +168,80 @@ class ObjectCounter:
         # Annotator Init and region drawing
         self.annotator = Annotator(self.im0, self.tf, self.names)
 
-        # Draw region or line
-        for i in range(4):
-            self.annotator.draw_region(reg_pts=self.reg_pts[i], color=self.region_color,
-                                       thickness=self.region_thickness)
+        # Draw regions
+        for i in range(self.region_lane):
+            self.annotator.draw_region(
+                reg_pts=self.reg_pts[i],
+                color=self.region_color,
+                thickness=self.region_thickness,
+            )
 
-        if tracks[0].boxes.id is not None:
-            boxes = tracks[0].boxes.xyxy.cpu()
-            clss = tracks[0].boxes.cls.cpu().tolist()
-            track_ids = tracks[0].boxes.id.int().cpu().tolist()
+        if tracks[0].boxes.id is None:
+            return
 
-            # Extract tracks
-            for box, track_id, cls in zip(boxes, track_ids, clss):
-                # Draw bounding box
-                self.annotator.box_label(box, label=f"{self.names[cls]}#{track_id}", color=colors(int(track_id), True))
+        # Extract track details
+        boxes = tracks[0].boxes.xyxy.cpu()
+        clss = tracks[0].boxes.cls.cpu().tolist()
+        track_ids = tracks[0].boxes.id.int().cpu().tolist()
 
-                # Store class info
-                if self.names[cls] not in self.class_wise_count:
-                    self.class_wise_count[self.names[cls]] = {"SUM": 0}
+        for box, track_id, cls in zip(boxes, track_ids, clss):
+            # Draw bounding box
+            color_list = [(0, 255, 0), (255, 0, 0), (128, 0, 128), (0, 165, 255)]
 
-                # Draw Tracks
-                track_line = self.track_history[track_id]
-                track_line.append((float((box[0] + box[2]) / 2), float((box[1] + box[3]) / 2)))
-                if len(track_line) > 10:
-                    track_line.pop(0)
+            self.annotator.box_label(
+                box,
+                label=f"{self.names[cls]}#{track_id}",
+                color=color_list[int(cls) % len(color_list)]
+            )
 
-                # Draw track trails
-                if self.draw_tracks:
-                    self.annotator.draw_centroid_and_tracks(
-                        track_line,
-                        color=self.track_color if self.track_color else colors(int(track_id), True),
-                        track_thickness=self.track_thickness,
+            # Update track history
+            track_line = self.track_history[track_id]
+            track_line.append(((box[0] + box[2]) / 2, (box[1] + box[3]) / 2))
+            if len(track_line) > 10:
+                track_line.pop(0)
+
+            # Draw track trails if enabled
+            if self.draw_tracks:
+                self.annotator.draw_centroid_and_tracks(
+                    track_line,
+                    color=self.track_color if self.track_color else colors(int(track_id), True),
+                    track_thickness=self.track_thickness,
+                )
+
+            # Process previous position and region checks
+            prev_position = track_line[-2] if len(track_line) > 1 else None
+            is_inside = [self.counting_region[i].contains(Point(track_line[-1])) for i in range(self.region_lane)]
+
+            # Handle object counting and region-specific rules
+            self.process_region_logic(self.region_lane, prev_position, is_inside, track_id, box, cls)
+
+    def process_region_logic(self, region_lane, prev_position, is_inside, track_id, box, cls):
+        """Handles object counting and annotation logic for specific region lanes."""
+
+        # Define rules for each region lane
+        region_rules = {
+            4: [
+                (1, lambda cid: self.names[cid] == 'motorbike'),
+                (2, lambda cid: self.names[cid] == 'motorbike'),
+                (3, lambda cid: self.names[cid] != 'motorbike'),
+            ],
+            5: [
+                (1, lambda cid: self.names[cid] not in ['motorbike', 'bus']),
+                (2, lambda cid: self.names[cid] == 'motorbike'),
+                (3, lambda cid: self.names[cid] == 'motorbike'),
+                (4, lambda cid: self.names[cid] == 'motorbike'),
+            ]
+        }
+
+        # Apply rules for the current region
+        if region_lane in region_rules:
+            for region_index, condition in region_rules[region_lane]:
+                if is_inside[region_index] and condition(cls):
+                    self.annotator.box_label(
+                        box,
+                        label=f"wrong {self.names[cls]}#{track_id}",
+                        color=(0, 0, 255),
                     )
-
-                prev_position = self.track_history[track_id][-2] if len(self.track_history[track_id]) > 1 else None
-
-                # Count objects in any polygon
-                if len(self.reg_pts[0]) == 4:
-                    is_inside = []
-                    for i in range(4):
-                        is_inside.append(self.counting_region[i].contains(Point(track_line[-1])))
-
-                    if prev_position is not None and is_inside[0] and track_id not in self.count_ids:
-                        self.count_ids.append(track_id)
-                        if (box[1] - prev_position[1]) * (self.counting_region[0].centroid.x - prev_position[1]) < 0:
-                            self.in_counts += 1
-                            self.class_wise_count[self.names[cls]]["SUM"] += 1
-                    if is_inside[1]:
-                        if self.names[cls] == 'motorbike':
-                            self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
-                                                     color=colors(int(track_id), True))
-                    if is_inside[2]:
-                        if self.names[cls] == 'motorbike':
-                            self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
-                                                     color=colors(int(track_id), True))
-                    if is_inside[3]:
-                        if self.names[cls] != 'motorbike':
-                            self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
-                                                     color=colors(int(track_id), True))
-                # if len(self.reg_pts[0]) == 4:
-                #     is_inside = []
-                #     for i in range(5):
-                #         is_inside.append(self.counting_region[i].contains(Point(track_line[-1])))
-                #
-                #     if prev_position is not None and is_inside[0] and track_id not in self.count_ids:
-                #         self.count_ids.append(track_id)
-                #         if (box[1] - prev_position[1]) * (self.counting_region[0].centroid.x - prev_position[1]) < 0:
-                #             self.in_counts += 1
-                #             self.class_wise_count[self.names[cls]]["SUM"] += 1
-                #     if is_inside[1]:
-                #         if self.names[cls] not in ['motorbike', 'bus']:
-                #             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
-                #                                      color=colors(int(track_id), True))
-                #     if is_inside[2]:
-                #         if self.names[cls] == 'motorbike':
-                #             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
-                #                                      color=colors(int(track_id), True))
-                #     if is_inside[3]:
-                #         if self.names[cls] == 'motorbike':
-                #             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
-                #                                      color=colors(int(track_id), True))
-                #     if is_inside[4]:
-                #         if self.names[cls] == 'motorbike':
-                #             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
-                #                                      color=colors(int(track_id), True))
-        # labels_dict = {}
-
-        # for key, value in self.class_wise_count.items():
-        #     if value["SUM"] != 0:
-        #         if not self.view_in_counts and not self.view_out_counts:
-        #             continue
-        #         else:
-        #             labels_dict[str.capitalize(key)] = f"{value['SUM']}"
-
-        # print(labels_dict)
-        # if labels_dict is not None:
-        #     self.annotator.display_analytics(self.im0, labels_dict, self.count_txt_color, self.count_bg_color, 1)
 
     def display_frames(self):
         """Display frame."""
@@ -273,9 +255,6 @@ class ObjectCounter:
 
         self.im0 = im0  # store image
         self.extract_and_process_tracks(tracks)  # draw region even if no objects
-
-        # count = 0
-        # cv2.imwrite("Save/Picture/picture%d.jpg " % count, self.im0)
 
         if self.view_img:
             self.display_frames()
