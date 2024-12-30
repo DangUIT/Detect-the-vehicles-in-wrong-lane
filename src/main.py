@@ -81,26 +81,11 @@ def setup_object_counter(model_names, lanes):
         reg_pts=lanes,
         classes_names=dict(model_names),
         draw_tracks=True,
-        line_thickness=1,
+        line_thickness=2,
         region_thickness=1,
         track_thickness=1
     )
     return counter
-
-
-def write_lane_info(lanes_count, output_video_path):
-    # Get the folder name based on the video name without extension
-    video_name = os.path.splitext(os.path.basename(output_video_path))[0]
-
-    # Create the output directory inside result/Save/ and name it based on the video name
-    save_dir = os.path.join("../result/Save", video_name)
-    os.makedirs(save_dir, exist_ok=True)  # Create the directory if it doesn't exist
-
-    # Write lane information into text files inside the folder
-    for i in range(1, lanes_count):
-        lane_file = os.path.join(save_dir, f"lane{i}.txt")
-        with open(lane_file, "w") as file:
-            file.write(f"Wrong lane {i}\n")
 
 
 def process_video_frames(cap, model, video_writer, object_count, fps_warmup_frames):
@@ -157,8 +142,6 @@ def main():
     video_writer = initialize_video_writer(output_video_path, fps)
 
     object_count = setup_object_counter(model.names, lanes)
-    # Call the function to save lane info as text files in the result folder
-    write_lane_info(len(lanes), output_video_path)
 
     process_video_frames(cap, model, video_writer, object_count, FPS_WARMUP_FRAMES)
 

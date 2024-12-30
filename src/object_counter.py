@@ -186,7 +186,7 @@ class ObjectCounter:
                 # Draw Tracks
                 track_line = self.track_history[track_id]
                 track_line.append((float((box[0] + box[2]) / 2), float((box[1] + box[3]) / 2)))
-                if len(track_line) > 30:
+                if len(track_line) > 10:
                     track_line.pop(0)
 
                 # Draw track trails
@@ -200,7 +200,7 @@ class ObjectCounter:
                 prev_position = self.track_history[track_id][-2] if len(self.track_history[track_id]) > 1 else None
 
                 # Count objects in any polygon
-                if len(self.reg_pts[0]) >= 3:
+                if len(self.reg_pts[0]) == 4:
                     is_inside = []
                     for i in range(4):
                         is_inside.append(self.counting_region[i].contains(Point(track_line[-1])))
@@ -214,24 +214,41 @@ class ObjectCounter:
                         if self.names[cls] == 'motorbike':
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
-                            f = open("../result/Save/Data/lane1.txt", "a")
-                            f.write(f"{self.names[cls]}#{track_id}\n")
-                            f.close()
                     if is_inside[2]:
                         if self.names[cls] == 'motorbike':
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
-                            f = open("../result/Save/Data/lane2.txt", "a")
-                            f.write(f"{self.names[cls]}#{track_id}\n")
-                            f.close()
                     if is_inside[3]:
                         if self.names[cls] != 'motorbike':
                             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
                                                      color=colors(int(track_id), True))
-                            f = open("../result/Save/Data/lane3.txt", "a")
-                            f.write(f"{self.names[cls]}#{track_id}\n")
-                            f.close()
-        labels_dict = {}
+                # if len(self.reg_pts[0]) == 4:
+                #     is_inside = []
+                #     for i in range(5):
+                #         is_inside.append(self.counting_region[i].contains(Point(track_line[-1])))
+                #
+                #     if prev_position is not None and is_inside[0] and track_id not in self.count_ids:
+                #         self.count_ids.append(track_id)
+                #         if (box[1] - prev_position[1]) * (self.counting_region[0].centroid.x - prev_position[1]) < 0:
+                #             self.in_counts += 1
+                #             self.class_wise_count[self.names[cls]]["SUM"] += 1
+                #     if is_inside[1]:
+                #         if self.names[cls] not in ['motorbike', 'bus']:
+                #             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
+                #                                      color=colors(int(track_id), True))
+                #     if is_inside[2]:
+                #         if self.names[cls] == 'motorbike':
+                #             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
+                #                                      color=colors(int(track_id), True))
+                #     if is_inside[3]:
+                #         if self.names[cls] == 'motorbike':
+                #             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
+                #                                      color=colors(int(track_id), True))
+                #     if is_inside[4]:
+                #         if self.names[cls] == 'motorbike':
+                #             self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}",
+                #                                      color=colors(int(track_id), True))
+        # labels_dict = {}
 
         # for key, value in self.class_wise_count.items():
         #     if value["SUM"] != 0:
@@ -241,8 +258,8 @@ class ObjectCounter:
         #             labels_dict[str.capitalize(key)] = f"{value['SUM']}"
 
         # print(labels_dict)
-        if labels_dict is not None:
-            self.annotator.display_analytics(self.im0, labels_dict, self.count_txt_color, self.count_bg_color, 1)
+        # if labels_dict is not None:
+        #     self.annotator.display_analytics(self.im0, labels_dict, self.count_txt_color, self.count_bg_color, 1)
 
     def display_frames(self):
         """Display frame."""
