@@ -1,5 +1,4 @@
 import argparse
-import json
 from ultralytics import YOLO
 import cv2
 import object_counter
@@ -9,7 +8,6 @@ import json
 
 # Constants
 MODEL_PATH = "../train/PTQ_416_736/best_int8.tflite"
-OUTPUT_VIDEO_PATH = "../result/Video/result.avi"
 FPS_WARMUP_FRAMES = 5
 FONT = cv2.FONT_HERSHEY_SIMPLEX
 TARGET_SIZE = (1280, 720)
@@ -62,7 +60,7 @@ def initialize_video_writer(output_path, fps):
     return cv2.VideoWriter(output_path, fourcc, fps, TARGET_SIZE)
 
 
-def get_unique_output_path(video_path, output_dir="../result/Video", suffix="_result", extension=".avi"):
+def get_unique_output_path(video_path, output_dir="../result/video", suffix="_result", extension=".avi"):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     output_base = os.path.join(output_dir, f"{video_name}{suffix}")
     output_path = f"{output_base}{extension}"
