@@ -12,8 +12,9 @@ This project utilizes **computer vision** and **deep learning** techniques to de
 - [Usage](#usage)  
 - [Model Optimization](#model-optimization)  
 - [Results](#results)  
+- [Demo](#demo) 
 - [Contributing](#contributing)  
-- [License](#license)  
+
 
 ## Overview
 The project aims to detect vehicles driving in the wrong lane using a custom-trained **YOLOv8n** model. It includes:  
@@ -25,8 +26,7 @@ The project aims to detect vehicles driving in the wrong lane using a custom-tra
 
 ## Features
 - **Real-time Detection:** Detects vehicles in the wrong lane with high accuracy.  
-- **Optimized Model:** Faster inference using PTQ and QAT.  
-- **Object Counting:** Tracks and counts vehicles for detailed reports.  
+- **Optimized Model:** Faster inference using PTQ and QAT.
 - **Scalable:** Adaptable to various traffic scenarios and datasets.  
 
 ## Technologies Used
@@ -34,7 +34,7 @@ The project aims to detect vehicles driving in the wrong lane using a custom-tra
 - **Ultralytics** – Python package for YOLOv8.  
 - **Python** – main programming language.  
 - **OpenCV** – for image and video processing.  
-- **CUDA** – optional, for GPU acceleration.  
+
 
 ## Installation
 ### 1. Clone the Repository
@@ -62,40 +62,26 @@ The project aims to detect vehicles driving in the wrong lane using a custom-tra
    pip install ultralytics[export]
    ```
 
-### 5. Prepare the Dataset
-   Place your training data in the `data/` folder, structured according to YOLOv8 format.  
 
 ## Usage
-### 1. Train the YOLOv8n Model
+
+
+### 1. Run Video
    ```bash
-   yolo task=detect mode=train model=yolov8n.pt data=data.yaml epochs=50
+   cd .\src\     
+   python .\main.py --video ..\video\Video\pvd_front.mp4
+   or
+   python3 .\main.py --video ..\video\Video\pvd_front.mp4
+
    ```
 
-### 2. Apply Post-Training Quantization
-   ```bash
-   python quantize.py --weights weights/yolov8n.pt --quantization ptq
-   ```
-
-### 3. Perform Quantization Aware Training
-   ```bash
-   yolo task=detect mode=train model=yolov8n.pt data=data.yaml epochs=10 qat=True
-   ```
-
-### 4. Run Detection on a Video Stream
-   ```bash
-   yolo task=detect mode=predict model=yolov8n-quantized.pt source=video.mp4
-   ```
-
-### 5. Track and Count Vehicles
-   ```bash
-   python object_counter.py --video video.mp4 --weights weights/yolov8n-quantized.pt
-   ```
 
 ## Model Optimization
 1. **Post-Training Quantization (PTQ):** Compresses the model by reducing weight precision, improving inference speed with minimal accuracy impact.  
 2. **Quantization Aware Training (QAT):** Simulates quantization effects during training for better accuracy in quantized models.  
 
 ## Results
+- Video result will be stored in result/video
 - **Performance:**  
    - Model size and inference time reduced using PTQ and QAT.  
    - Accuracy remains comparable to the original YOLOv8n model.  
@@ -107,6 +93,8 @@ The project aims to detect vehicles driving in the wrong lane using a custom-tra
 - **Inference Speed:**  
    - ~40 FPS on GPU.  
    - ~12 FPS on CPU.  
+
+## Demo
 
 ## Contributing
 Contributions are welcome! Please fork the repository and submit a pull request to propose changes or improvements.  
