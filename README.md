@@ -87,15 +87,15 @@ The project aims to detect vehicles driving in the wrong lane using a custom-tra
    - Accuracy remains comparable to the original YOLOv8n model.  
 
 - **Detection Accuracy:**  
-   - Precision: 97%  
-   - Recall: 94%  
+   - Precision: 93.5%  
+   - Recall: 89.1%  
 
-- **Inference Speed:**  
-   - ~40 FPS on GPU.  
-   - ~12 FPS on CPU.  
+- **Inference Speed in Raspberry Pi 5:**  
+   - Initial Model: FPS = 4.83  
+   - Static Post Training Quantization: FPS = 12.73.  
 
 ## Demo
-
+- [Detecting vehicle in wrong lane](https://youtu.be/XSQ5pRy6Tq0)
 ## Contributing
 Contributions are welcome! Please fork the repository and submit a pull request to propose changes or improvements.  
 

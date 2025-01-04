@@ -21,7 +21,7 @@ def extract_frames(video_path, output_folder):
         ret, frame = cap.read()  # Đọc một frame
         if not ret:
             break  # Nếu không có frame nào thì thoát
-        frame = cv2.resize(frame, (1280, 720))
+        # frame = cv2.resize(frame, (1280, 720))
         # Mỗi lần cắt 1 frame
         if frame_count % (int(cap.get(cv2.CAP_PROP_FRAME_COUNT) // 5)) == 0 and saved_count < 1:
             filename = f"{output_folder}/{video_name}_{saved_count + 1}.jpg"

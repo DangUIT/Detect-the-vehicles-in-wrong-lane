@@ -7,11 +7,11 @@ import os
 import json
 
 # Constants
-MODEL_PATH = "../train/PTQ_416_736/best_int8.tflite"
+MODEL_PATH = "../train/PTQ_224_416/best_saved_model/best_full_integer_quant.tflite"
 FPS_WARMUP_FRAMES = 5
 FONT = cv2.FONT_HERSHEY_SIMPLEX
 TARGET_SIZE = (1280, 720)
-IMAGE_SIZE = (416, 736)
+IMAGE_SIZE = (224, 416)
 LANES_CONFIG_PATH = "../config/lanes_config.json"  # Path to the single JSON configuration file
 
 
@@ -100,7 +100,7 @@ def process_video_frames(cap, model, video_writer, object_count, fps_warmup_fram
         if not success:
             print("Video processing completed.")
             break
-        resize_frame = cv2.resize(frame, TARGET_SIZE)
+
         current_fps = 1 / (time() - start_time)
         start_time = time()
 
@@ -112,11 +112,11 @@ def process_video_frames(cap, model, video_writer, object_count, fps_warmup_fram
         frame_count += 1
         print(f"FPS: {current_fps:.2f}")
 
-        tracks = model.track(resize_frame, persist=True, show=False, imgsz=IMAGE_SIZE, conf=0.1)
-        cv2.putText(resize_frame, f"FPS: {current_fps:.2f}", (27, 61), FONT, 1, (0, 0, 255), 3)
-        resize_frame = object_count.start_counting(resize_frame, tracks)
+        tracks = model.track(frame, persist=True, show=False, imgsz=IMAGE_SIZE, conf=0.1)
+        cv2.putText(frame, f"FPS: {current_fps:.2f}", (27, 61), FONT, 1, (0, 0, 255), 3)
+        frame = object_count.start_counting(frame, tracks)
 
-        video_writer.write(resize_frame)
+        video_writer.write(frame)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
@@ -133,9 +133,10 @@ def main():
     # Load lane configuration
     lanes = load_lane_configuration(args.video)
 
-    # Count lists for each key in lanes
+    # Count number lanes
     number_lane = len(lanes)
 
+    # Initialize model
     model = initialize_model(MODEL_PATH)
     print(model.names)
 

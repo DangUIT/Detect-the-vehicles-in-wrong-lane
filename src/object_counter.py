@@ -218,30 +218,23 @@ class ObjectCounter:
     def process_region_logic(self, region_lane, prev_position, is_inside, track_id, box, cls):
         """Handles object counting and annotation logic for specific region lanes."""
 
-        # Define rules for each region lane
-        region_rules = {
-            4: [
-                (1, lambda cid: self.names[cid] == 'motorbike'),
-                (2, lambda cid: self.names[cid] == 'motorbike'),
-                (3, lambda cid: self.names[cid] != 'motorbike'),
-            ],
-            5: [
-                (1, lambda cid: self.names[cid] not in ['motorbike', 'bus']),
-                (2, lambda cid: self.names[cid] == 'motorbike'),
-                (3, lambda cid: self.names[cid] == 'motorbike'),
-                (4, lambda cid: self.names[cid] == 'motorbike'),
-            ]
-        }
+        if region_lane == 4:
+            if is_inside[1] and self.names[cls] == 'motorbike':
+                self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}", color=(0, 0, 255))
+            if is_inside[2] and self.names[cls] == 'motorbike':
+                self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}", color=(0, 0, 255))
+            if is_inside[3] and self.names[cls] != 'motorbike':
+                self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}", color=(0, 0, 255))
 
-        # Apply rules for the current region
-        if region_lane in region_rules:
-            for region_index, condition in region_rules[region_lane]:
-                if is_inside[region_index] and condition(cls):
-                    self.annotator.box_label(
-                        box,
-                        label=f"wrong {self.names[cls]}#{track_id}",
-                        color=(0, 0, 255),
-                    )
+        elif region_lane == 5:
+            if is_inside[1] and self.names[cls] not in ['motorbike', 'bus']:
+                self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}", color=(0, 0, 255))
+            if is_inside[2] and self.names[cls] == 'motorbike':
+                self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}", color=(0, 0, 255))
+            if is_inside[3] and self.names[cls] == 'motorbike':
+                self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}", color=(0, 0, 255))
+            if is_inside[4] and self.names[cls] == 'motorbike':
+                self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}", color=(0, 0, 255))
 
     def display_frames(self):
         """Display frame."""
