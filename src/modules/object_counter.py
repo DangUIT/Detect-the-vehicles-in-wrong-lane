@@ -268,7 +268,8 @@ class ObjectCounter:
         """
         sf = 0.8  # font scale
 
-        horizontal_gap = int(im0.shape[1] * 0.15)
+        horizontal_gap = int(im0.shape[1] * 0.01) #bentre
+        # horizontal_gap = int(im0.shape[1] * 0.15) #pvd_front
         vertical_gap = int(im0.shape[0] * 0.01)
         text_y_offset = 0
         for label, value in text.items():
