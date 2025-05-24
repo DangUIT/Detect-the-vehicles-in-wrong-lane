@@ -194,6 +194,10 @@ class ObjectCounter:
                 color=color_list[int(cls) % len(color_list)]
             )
 
+            # Store class info
+            if self.names[cls] not in self.class_wise_count:
+                self.class_wise_count[self.names[cls]] = {"SUM": 0}
+
             # Update track history
             track_line = self.track_history[track_id]
             track_line.append(((box[0] + box[2]) / 2, (box[1] + box[3]) / 2))
@@ -217,6 +221,11 @@ class ObjectCounter:
 
     def process_region_logic(self, region_lane, prev_position, is_inside, track_id, box, cls):
         """Handles object counting and annotation logic for specific region lanes."""
+        if prev_position is not None and is_inside[0] and track_id not in self.count_ids:
+            self.count_ids.append(track_id)
+            if (box[1] - prev_position[1]) * (self.counting_region[0].centroid.x - prev_position[1]) < 0:
+                self.in_counts += 1
+                self.class_wise_count[self.names[cls]]["SUM"] += 1
 
         if region_lane == 4:
             if is_inside[1] and self.names[cls] == 'motorbike':
@@ -236,6 +245,46 @@ class ObjectCounter:
             if is_inside[4] and self.names[cls] == 'motorbike':
                 self.annotator.box_label(box, label=f"wrong {self.names[cls]}#{track_id}", color=(0, 0, 255))
 
+        labels_dict = {}
+
+        for key, value in self.class_wise_count.items():
+            if not self.view_in_counts and not self.view_out_counts:
+                continue
+            else:
+                labels_dict[str.capitalize(key)] = f"{value['SUM']}"
+
+        self.display_analytics(self.im0, labels_dict, self.count_txt_color, self.count_bg_color, 5)
+
+    def display_analytics(self, im0, text, txt_color, bg_color, margin):
+        """
+        Display the overall statistics for parking lots.
+
+        Args:
+            im0 (ndarray): inference image
+            text (dict): labels dictionary
+            txt_color (tuple): display color for text foreground
+            bg_color (tuple): display color for text background
+            margin (int): gap between text and rectangle for better display
+        """
+        sf = 0.8  # font scale
+
+        horizontal_gap = int(im0.shape[1] * 0.15)
+        vertical_gap = int(im0.shape[0] * 0.01)
+        text_y_offset = 0
+        for label, value in text.items():
+            txt = f"{label}: {value}"
+            text_size = cv2.getTextSize(txt, 0, sf, self.tf)[0]
+            if text_size[0] < 5 or text_size[1] < 5:
+                text_size = (5, 5)
+            text_x = im0.shape[1] - text_size[0] - margin * 2 - horizontal_gap
+            text_y = text_y_offset + text_size[1] + margin * 2 + vertical_gap
+            rect_x1 = text_x - margin * 2
+            rect_y1 = text_y - text_size[1] - margin * 2
+            rect_x2 = text_x + text_size[0] + margin * 2
+            rect_y2 = text_y + margin * 2
+            cv2.rectangle(im0, (rect_x1, rect_y1), (rect_x2, rect_y2), bg_color, -1)
+            cv2.putText(im0, txt, (text_x, text_y), 0, sf, txt_color, self.tf, lineType=cv2.LINE_AA)
+            text_y_offset = rect_y2
     def display_frames(self):
         """Display frame."""
         if self.env_check:

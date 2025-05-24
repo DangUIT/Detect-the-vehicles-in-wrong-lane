@@ -7,11 +7,11 @@ import os
 import json
 
 # Constants
-MODEL_PATH = "../train/PTQ_224_416/best_saved_model/best_full_integer_quant.tflite"
+MODEL_PATH = "../train/imgsz_224/best_int8_openvino_model"
 FPS_WARMUP_FRAMES = 5
 FONT = cv2.FONT_HERSHEY_SIMPLEX
 TARGET_SIZE = (1280, 720)
-IMAGE_SIZE = (224, 416)
+IMAGE_SIZE = (224, 224)
 LANES_CONFIG_PATH = "../config/lanes_config.json"  # Path to the single JSON configuration file
 
 
@@ -94,6 +94,7 @@ def process_video_frames(cap, model, video_writer, object_count, fps_warmup_fram
     min_fps = float("inf")
     max_fps = 0
     start_time = time()
+    inference_time_ms = 0
 
     while cap.isOpened():
         success, frame = cap.read()
@@ -116,12 +117,17 @@ def process_video_frames(cap, model, video_writer, object_count, fps_warmup_fram
         cv2.putText(frame, f"FPS: {current_fps:.2f}", (27, 61), FONT, 1, (0, 0, 255), 3)
         frame = object_count.start_counting(frame, tracks)
 
+        speed = tracks[0].speed
+        inference_time_ms += speed['inference']
+
         video_writer.write(frame)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
     average_fps = total_fps / (frame_count - fps_warmup_frames) if frame_count > fps_warmup_frames else 0
+    average_inference_time = inference_time_ms / frame_count
+    print(f"Average inference time: {average_inference_time:.2f} ms")
     print(f"Average FPS: {average_fps:.2f}")
     print(f"Min FPS: {min_fps:.2f}")
     print(f"Max FPS: {max_fps:.2f}")
