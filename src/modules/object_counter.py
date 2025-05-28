@@ -6,6 +6,10 @@ from ultralytics.utils.plotting import Annotator, colors
 
 check_requirements("shapely>=2.0.0")
 from shapely.geometry import LineString, Point, Polygon
+from time import time
+
+
+FONT = cv2.FONT_HERSHEY_SIMPLEX
 
 
 class ObjectCounter:
@@ -286,19 +290,26 @@ class ObjectCounter:
             cv2.rectangle(im0, (rect_x1, rect_y1), (rect_x2, rect_y2), bg_color, -1)
             cv2.putText(im0, txt, (text_x, text_y), 0, sf, txt_color, self.tf, lineType=cv2.LINE_AA)
             text_y_offset = rect_y2
-    def display_frames(self):
+
+    def display_frames(self, frame_start_time):
         """Display frame."""
         if self.env_check:
+            frame_end_time = time()
+            frame_processing_time = frame_end_time - frame_start_time
+            current_fps = 1 / frame_processing_time if frame_processing_time > 0 else 0
+
+            cv2.putText(self.im0, f"FPS: {current_fps:.2f}", (27, 61), FONT, 1, (0, 0, 255), 3)
             cv2.namedWindow(self.window_name)
-            if len(self.reg_pts[0]) == 4:  # only add mouse event If user drawn region
-                cv2.setMouseCallback(self.window_name, self.mouse_event_for_region, {"region_points": self.reg_pts[0]})
             cv2.imshow(self.window_name, self.im0)
 
-    def start_counting(self, im0, tracks):
+            return current_fps
 
+    def start_counting(self, im0, tracks, frame_start_time):
+
+        current_fps = 0
         self.im0 = im0  # store image
         self.extract_and_process_tracks(tracks)  # draw region even if no objects
 
         if self.view_img:
-            self.display_frames()
-        return self.im0
+            current_fps = self.display_frames(frame_start_time)
+        return self.im0, current_fps

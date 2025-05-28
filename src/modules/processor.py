@@ -3,7 +3,6 @@ from . import object_counter
 from time import time
 
 FPS_WARMUP_FRAMES = 5
-FONT = cv2.FONT_HERSHEY_SIMPLEX
 
 
 def setup_object_counter(model_names, number_lane, lanes):
@@ -26,7 +25,6 @@ def process_video_frames(cap, model, video_writer, object_count, fps_warmup_fram
     frame_count = 0
     min_fps = float("inf")
     max_fps = 0
-    start_time = time()
     inference_time_ms = 0
 
     while cap.isOpened():
@@ -35,25 +33,24 @@ def process_video_frames(cap, model, video_writer, object_count, fps_warmup_fram
             print("Video processing completed.")
             break
 
-        current_fps = 1 / (time() - start_time)
-        start_time = time()
+        frame_start_time = time()
+
+        tracks = model.track(frame, persist=True, show=False, imgsz=img_size, conf=0.1)
+
+        frame, current_fps = object_count.start_counting(frame, tracks, frame_start_time)
+
+        speed = tracks[0].speed
+        inference_time_ms += speed['inference']
 
         if frame_count >= fps_warmup_frames:
             total_fps += current_fps
             min_fps = min(min_fps, current_fps)
             max_fps = max(max_fps, current_fps)
 
-        frame_count += 1
         print(f"FPS: {current_fps:.2f}")
 
-        tracks = model.track(frame, persist=True, show=False, imgsz=img_size, conf=0.1)
-        cv2.putText(frame, f"FPS: {current_fps:.2f}", (27, 61), FONT, 1, (0, 0, 255), 3)
-        frame = object_count.start_counting(frame, tracks)
-
-        speed = tracks[0].speed
-        inference_time_ms += speed['inference']
-
         video_writer.write(frame)
+        frame_count += 1
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
