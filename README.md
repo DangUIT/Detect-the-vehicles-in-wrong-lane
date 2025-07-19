@@ -1,8 +1,7 @@
 
-
 # Detect Vehicle in Wrong Lane
 
-This project utilizes **computer vision** and **deep learning** techniques to detect vehicles traveling in the wrong lane. The model is based on **YOLOv8n**, optimized for efficient inference using quantization techniques. The project also includes object counting to accurately detect and report lane violations.  
+This project leverages **computer vision** and **deep learning** techniques to detect vehicles traveling in the wrong lane. A lightweight and efficient detection model based on **YOLOv11n** is employed, with further optimization using **Post-Training Quantization (PTQ)**. The system supports real-time object detection, tracking, and violation analysis, and is designed to run smoothly on low-power devices such as the **Raspberry Pi 5**.
 
 ## Table of Contents
 - [Overview](#overview)  
@@ -13,90 +12,128 @@ This project utilizes **computer vision** and **deep learning** techniques to de
 - [Model Optimization](#model-optimization)  
 - [Results](#results)  
 - [Demo](#demo) 
+- [Summary](#summary)
 - [Contributing](#contributing)  
 
-
 ## Overview
-The project aims to detect vehicles driving in the wrong lane using a custom-trained **YOLOv8n** model. It includes:  
-1. **Model Training:** Training a custom vehicle dataset using **YOLOv8n**.  
-2. **Model Optimization:** 
-   - **Post-training Quantization (PTQ)** to reduce memory usage and inference time.  
-   - **Quantization Aware Training (QAT)** to minimize accuracy loss while reducing computation costs.  
-3. **Detection and Counting:** Implementing YOLO-based object counting for accurate detection and tracking of lane violations.  
+
+This project aims to develop an intelligent system that can:
+1. **Train** a custom vehicle detection model using **YOLOv11n**.
+2. **Optimize** the model with **Post-Training Quantization (PTQ)** to reduce size and improve inference time.
+3. **Detect and track** vehicles using **YOLOv11n** and **ByteTrack**, then compare their positions against predefined lane boundaries to identify violations.
 
 ## Features
-- **Real-time Detection:** Detects vehicles in the wrong lane with high accuracy.  
-- **Optimized Model:** Faster inference using PTQ and QAT.
-- **Scalable:** Adaptable to various traffic scenarios and datasets.  
+
+- ✅ **Real-Time Detection:** Accurately detects wrong-lane driving behavior.
+- 🚀 **Quantized Model:** Optimized using PTQ for improved performance and lower resource usage.
+- 🎯 **Accurate Classification:** Supports motorbikes, cars, trucks, and buses.
+- 💻 **Edge Deployment:** Efficiently runs on embedded systems like Raspberry Pi 5.
 
 ## Technologies Used
-- **YOLOv8n** – for model training and object detection.  
-- **Ultralytics** – Python package for YOLOv8.  
-- **Python** – main programming language.  
-- **OpenCV** – for image and video processing.  
 
+- **YOLOv11n** – Object detection architecture.
+- **Ultralytics** – YOLO training/export toolkit.
+- **OpenVINO** – For INT8 model inference optimization.
+- **Python**, **OpenCV** – For image processing and application logic.
+- **ByteTrack** – Multi-object tracking framework.
 
 ## Installation
+
 ### 1. Clone the Repository
-   ```bash
-   git clone https://github.com/DangUIT/Detect-the-vehicles-in-wrong-lane.git
-   cd Detect-the-vehicles-in-wrong-lane
-   ```
+```bash
+git clone https://github.com/DangUIT/Detect-the-vehicles-in-wrong-lane.git
+cd Detect-the-vehicles-in-wrong-lane
+```
 
 ### 2. Create a Virtual Environment
-   ```bash
-   python -m venv venv
-   source venv/bin/activate
-   ```
+```bash
+python -m venv venv
+source venv/bin/activate  # For Linux/macOS
+venv\Scripts\activate     # For Windows
+```
 
-### 3. Update the package list and install pip
-   ```bash
-   sudo apt update
-   sudo apt install python3-pip -y
-   pip install -U pip
-   ```
+### 3. Install Dependencies
+```bash
+sudo apt update
+sudo apt install python3-pip -y
+pip install -U pip
+pip install ultralytics[export]
+```
 
-### 4. Install Required Packages
-   Install the Ultralytics package with optional dependencies:
-   ```bash
-   pip install ultralytics[export]
-   ```
+📌 *Note: Run with `ultralytics==8.x.x`*  
+💵 *To know the exact version or support, please contact: trandanganninh1@gmail.com (paid request)*
 
 
 ## Usage
 
+### 1. Navigate to source directory
+```bash
+cd ./src
+```
 
-### 1. Run Video
-   ```bash
-   cd .\src\     
-   python .\main.py --video ..\video\Video\pvd_front.mp4
-   or
-   python3 .\main.py --video ..\video\Video\pvd_front.mp4
+### 2. Run Detection
 
-   ```
+#### On **Windows**:
+```bash
+.\run_pvd.bat
+.\run_bentre.bat
+```
 
+#### On **Raspberry Pi 5**:
+```bash
+./run_pvd.sh
+./run_bentre.sh
+```
 
 ## Model Optimization
-1. **Post-Training Quantization (PTQ):** Compresses the model by reducing weight precision, improving inference speed with minimal accuracy impact.  
-2. **Quantization Aware Training (QAT):** Simulates quantization effects during training for better accuracy in quantized models.  
+
+- **Post-Training Quantization (PTQ):**  
+  The model is converted to **INT8** format using **OpenVINO**, which significantly improves inference speed and reduces model size. This allows for smooth and efficient deployment on embedded platforms such as Raspberry Pi, with minimal accuracy degradation.
 
 ## Results
-- Video result will be stored in result/video
-- **Performance:**  
-   - Model size and inference time reduced using PTQ and QAT.  
-   - Accuracy remains comparable to the original YOLOv8n model.  
 
-- **Detection Accuracy:**  
-   - Precision: 93.5%  
-   - Recall: 89.1%  
+### Detection Accuracy
 
-- **Inference Speed in Raspberry Pi 5:**  
-   - Initial Model: FPS = 4.83  
-   - Static Post Training Quantization: FPS = 12.73.  
+| Model                   | Precision | Recall | mAP50 |
+|------------------------|-----------|--------|--------|
+| YOLOv11n_224x224        | 0.851     | 0.770  | 0.859  |
+| YOLOv11n_INT8_224x224   | 0.848     | 0.765  | 0.855  |
+| YOLOv11n_416x416        | 0.902     | 0.886  | 0.948  |
+| YOLOv11n_INT8_416x416   | 0.884     | 0.882  | 0.943  |
+| YOLOv11n_640x640        | 0.910     | 0.914  | 0.962  |
+| YOLOv11n_INT8_640x640   | 0.905     | 0.911  | 0.962  |
+
+### Inference Performance on Raspberry Pi 5
+
+| Model                   | FPS   | Inference Time |
+|------------------------|-------|----------------|
+| YOLOv11n_224x224        | 14.85 | 60.69 ms       |
+| YOLOv11n_INT8_224x224   | 30.17 | 23.60 ms       |
+| YOLOv11n_640x640        | 3.79  | 250.42 ms      |
+| YOLOv11n_INT8_640x640   | 8.68  | 98.57 ms       |
+
+📁 Output videos are saved in: `result/video`  
+📄 Benchmark logs are saved in: `result/benchmark`
 
 ## Demo
-- [Detecting vehicle in wrong lane](https://youtu.be/XSQ5pRy6Tq0)
-## Contributing
-Contributions are welcome! Please fork the repository and submit a pull request to propose changes or improvements.  
 
----
+![YouTube Logo](https://img.icons8.com/color/12/000000/youtube-play.png) [Wrong-lane detection – Ben Tre](https://youtu.be/1P9afBQDIDM)  
+![YouTube Logo](https://img.icons8.com/color/12/000000/youtube-play.png)[Wrong-lane detection – Pham Van Dong](https://youtu.be/WX-ibKRnSQ0)
+
+## Summary
+
+This project delivers an effective and lightweight traffic monitoring system capable of detecting wrong-lane vehicle movement. It is specifically designed for **real-time deployment** on **embedded devices** like Raspberry Pi.
+
+Key highlights:
+
+🚗 **Vehicle Type Support:** Motorbike, car, truck, bus  
+🛣️ **Violation Analysis:** Detects vehicles crossing into incorrect lanes  
+🎯 **Reliable Tracking:** Powered by ByteTrack for object association  
+⚡ **Performance Boost:** Quantized model offers 2–3× speedup with reduced CPU load  
+
+This solution demonstrates strong potential for **smart traffic management** and urban safety applications.
+
+## Contributing
+
+Contributions are welcome!  
+Feel free to fork this repository and submit a pull request with improvements or new features.

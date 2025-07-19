@@ -1,0 +1,4 @@
+Average FPS: 22.32
+Min FPS: 12.73
+Max FPS: 31.76
+Average Inference Time: 25.04 ms
