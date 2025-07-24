@@ -60,8 +60,6 @@ pip install -U pip
 pip install ultralytics[export]
 ```
 
-📌 *Note: Run with `ultralytics==8.x.x`*  
-💵 *To know the exact version or support, please contact: trandanganninh1@gmail.com (paid request)*
 
 
 ## Usage
@@ -133,6 +131,7 @@ Key highlights:
 
 This solution demonstrates strong potential for **smart traffic management** and urban safety applications.
 
+💵 *If you need to be supported, please contact: trandanganninh1@gmail.com (paid request)*
 ## Contributing
 
 Contributions are welcome!  
